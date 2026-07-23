@@ -1,18 +1,6 @@
-# Logs
-logs
-*.log
+# Never commit the resume source document
+*.docx
 
-# Runtime data
-pids
-*.pid
-*.seed
-
-# Coverage tools
-lib-cov
-coverage
-
-# Dependency directory
-node_modules
-
-# Generated css
-public/styles/*.css
+# OS junk
+.DS_Store
+Thumbs.db

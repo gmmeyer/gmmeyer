@@ -1,0 +1,113 @@
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #6b6b6b;
+  --rule: #e4e4e4;
+  --link: #0b5fa5;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131313;
+    --text: #e6e6e6;
+    --muted: #9a9a9a;
+    --rule: #2c2c2c;
+    --link: #6fb3e8;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0 auto;
+  padding: 4rem 1.5rem 5rem;
+  max-width: 42rem;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+header p.tagline {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+}
+nav.contact {
+  margin-top: 0.75rem;
+  color: var(--muted);
+}
+nav.contact a { margin-right: 1rem; }
+nav.contact a[aria-current="page"] {
+  color: var(--text);
+  font-weight: 600;
+}
+section { margin-top: 3rem; }
+h2 {
+  margin: 0 0 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.job { margin-bottom: 2rem; }
+.job:last-child { margin-bottom: 0; }
+.job-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.job-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+}
+.job-head .role { font-weight: 400; color: var(--muted); }
+.job-head .when {
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.job ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+.job li { margin-bottom: 0.35rem; }
+.job li:last-child { margin-bottom: 0; }
+.job p.links {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+.job p.links a { margin-right: 1rem; }
+footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+footer .social a {
+  margin-left: 1rem;
+  color: var(--muted);
+}
+footer .social a:hover { color: var(--link); }
+footer .social svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  vertical-align: middle;
+}
+@media print {
+  body { padding: 0; max-width: none; font-size: 12px; }
+  :root { --bg: #fff; --text: #000; --muted: #444; --link: #000; }
+  section { margin-top: 1.5rem; }
+  footer { display: none; }
+}
