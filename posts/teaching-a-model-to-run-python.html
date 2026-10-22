@@ -134,8 +134,12 @@
 
   <h2>Running it in your browser</h2>
 
-  <!-- TODO(Greg): fill in once built; see docs/WEB_DEMO.md in the pythonlm repo. -->
-  <p>The demo runs the whole thing on your machine. CPython 3.14, compiled to WebAssembly by the Pyodide project, compiles your script and runs the harness; the model, exported to ONNX and hosted on Hugging Face, runs on your GPU through WebGPU, falling back to the CPU. You can watch the state change one instruction at a time, next to what real Python prints for the same script.</p>
+  <!-- TODO(Greg): numbers are from c2 in Chromium 152; re-measure with the shipped model. -->
+  <p>The demo runs the whole thing on your machine. CPython 3.14, compiled to WebAssembly by the Pyodide project, compiles your script and runs the same harness, in Python, that the training box uses. The model is exported to ONNX, hosted on Hugging Face, and runs on ONNX Runtime Web. You can watch the state change one instruction at a time, next to what real Python prints for the same script.</p>
+
+  <p>Two things made that practical. First, the model rewrites the whole machine state at every step, about 30 tokens even when one number changed, and generating those one at a time made a typical script take most of a minute. But the new state is mostly a copy of the old one, so the page drafts it from the old state and checks the whole draft in a single pass, keeping it only as far as the model agrees with it. The output is exactly what token-by-token decoding would give, in about 5 passes per step instead of 30.</p>
+
+  <p>Second, I had the Cicero problem again: on WebGPU, one ONNX Runtime Web build gave this model garbage logits, off by 25, while the same file was fine on the CPU. Another build of the same library is correct. So the page now runs a self-test before it trusts any backend: a few steps with known answers from the PyTorch model, which have to match exactly. It also turned out that for a model this small, the CPU is about ten times faster than the GPU per pass, so that's what it usually runs on.</p>
 
   <p>After Cicero, I'm measuring the artifact that ships: the browser model goes through the same hand-written test sets as the PyTorch checkpoint before it goes up.</p>
 
