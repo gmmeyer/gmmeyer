@@ -211,3 +211,16 @@ footer .social svg {
   section { margin-top: 1.5rem; }
   footer { display: none; }
 }
+.post table {
+  width: 100%;
+  margin: 0 0 1rem;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.post th, .post td {
+  padding: 0.4rem 0.6rem 0.4rem 0;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+.post th { font-weight: 600; }

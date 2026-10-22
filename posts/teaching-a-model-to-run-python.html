@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teaching a Model to Run Python — Greg Meyer</title>
+  <meta name="description" content="A 26M-parameter transformer, trained from scratch on one GPU, that executes CPython bytecode one instruction at a time.">
+  <link rel="stylesheet" href="../style.css?v=5">
+</head>
+<body>
+
+<header>
+  <h1>Greg Meyer</h1>
+  <p class="tagline">Blog</p>
+  <nav class="contact">
+    <a href="../">Home</a>
+    <a href="../experience.html">Experience</a>
+    <a href="../projects.html">Projects</a>
+    <a href="../blog.html">Blog</a>
+  </nav>
+</header>
+
+<!--
+  DRAFT v1. Things to check or rewrite before publishing:
+  - "Why" section: the motivation is my guess, say it your way.
+  - Phase C numbers are from c2; c3 is training as this is written. Update the
+    strings section and the closing numbers once c3 (and maybe c4) are gated.
+  - "Try it" links to ../pythonlm/, which doesn't exist yet (see the demo plan
+    in the pythonlm repo, docs/WEB_DEMO.md).
+  - Date is a placeholder.
+-->
+
+<article class="post">
+  <header class="post-head">
+    <h1>Teaching a Model to Run Python</h1>
+    <p class="dek">A small transformer that executes CPython bytecode, one instruction at a time</p>
+    <time datetime="2026-10-30">October 2026</time>
+  </header>
+
+  <p>I trained a small transformer to be a Python interpreter. You give it a script, CPython compiles it to bytecode, and the model runs that bytecode one instruction at a time: it reads the program and the current state of the machine, and writes out the next state. A thin harness takes whatever the model says was printed and puts it on your screen.</p>
+
+  <p>Nothing in the loop does the arithmetic for it. When your script says <code>487 // 13</code>, the model works out 37.</p>
+
+  <h2>Why did I do this?</h2>
+
+  <!-- TODO(Greg): your reasons. A guess at an angle: -->
+  <p>After <a href="building-cicero.html">Cicero</a> I wanted the opposite kind of problem. Latin has no answer key: the best I could do was a cloze test and my own eyes. A program's output is right or it's wrong, character for character. And the training data is free and unlimited, because you can generate as many programs as you like and run them to get the answers. So the question was how far a small model, trained from scratch on my 5090, could get at executing real Python exactly.</p>
+
+  <h2>How it works</h2>
+
+  <p>The model doesn't read Python source. Compiling Python is a solved problem, and CPython already does it exactly, so the script goes through the real <code>compile()</code> first. What the model learns is execution: given the bytecode listing and the state of the virtual machine (which instruction is next, what's on the value stack, what every variable holds), predict the state after one more instruction, plus anything that instruction printed.</p>
+
+  <p>It's a step model, not a trace model: the model sees the listing and the current state, never the history. So a script that runs 5,000 instructions needs no more context than one that runs 5.</p>
+
+  <p>Everything is tokens from a custom vocabulary of 354: opcodes, digits, one token per character for strings, a handful of structural markers. Here's one real step from <code>n = 487; q = n // 13; print(q)</code>, the division itself:</p>
+
+  <pre><code>&lt;state&gt; ip @0 @0 @5 stack i+ 7 8 4 i+ 3 1 names N0 i+ 7 8 4 &lt;/state&gt; =&gt;
+&lt;work&gt; i+ 3 7 &lt;/work&gt;
+&lt;state&gt; ip @0 @0 @6 stack i+ 7 3 names N0 i+ 7 8 4 &lt;/state&gt;</code></pre>
+
+  <p>A few things to notice. Numbers are written least significant digit first (<code>487</code> is <code>i+ 7 8 4</code>), because that's the order carries happen in for addition and multiplication. Variable names are anonymized (<code>n</code> is just <code>N0</code>), since what a variable is called never changes what a program does. The instruction pointer gets its own digit tokens, because it's only ever copied or matched against the listing, never computed. And the <code>&lt;work&gt;</code> part is scratch space the model writes before the answer, which needs its own section below.</p>
+
+  <h2>Refuse, don't guess</h2>
+
+  <p>The model only knows a subset of Python, so the first thing that happens to any script is a support check: it scans the bytecode and refuses anything outside the current subset before running a single step. A clear "I don't support that" beats confidently wrong output.</p>
+
+  <p>Then every step goes through two safeguards. Decoding is constrained by a grammar, so the model can't write a malformed state. And a validator checks everything about the new state that follows from the listing alone: the next instruction is a legal successor, the part of the stack below the instruction's operands didn't change, only the variable being assigned changed, a <code>SWAP</code> really swapped. If a step fails, the harness resamples, and if every sample fails, the run stops with an error.</p>
+
+  <p>What the validator never does is recompute values. It can tell you the model wrote nonsense. It can't tell you the model got the math wrong. That part is all the model.</p>
+
+  <h2>The data is free</h2>
+
+  <p>CPython doesn't let you see its value stack from Python, so I needed my own reference interpreter for the subset, which records the full machine state after every instruction. A reference interpreter that's subtly wrong would teach the model to be subtly wrong, so every generated script is also run in real CPython with opcode-level tracing, and the two are compared at every single instruction: which instruction ran, every variable's value, and the final output. Any mismatch stops generation. Across millions of scripts, there hasn't been one.</p>
+
+  <p>The scripts come from three places: a grammar that writes random programs in the subset, templates of classics (gcd, Fibonacci, FizzBuzz, Collatz, digit sums), and about a thousand "natural" scripts written by Claude in the style people actually write, which the pipeline perturbs into many more. A billion tokens of training data takes about a minute on 32 cores.</p>
+
+  <p>The subset grows in phases, and the bar for each phase is 99% exact output on programs it has never seen:</p>
+
+  <ul>
+    <li><strong>A:</strong> integers, variables, <code>+ - * // %</code>, <code>print()</code></li>
+    <li><strong>B:</strong> comparisons, <code>and</code>/<code>or</code>/<code>not</code>, if/elif/else, while, <code>for</code> over <code>range()</code>, break, continue</li>
+    <li><strong>C:</strong> strings: concatenation, f-strings, <code>str()</code>, <code>len()</code>, indexing, printing several things at once</li>
+  </ul>
+
+  <p>Lists, functions and dicts come later. Floats are out of scope on purpose: printing a float exactly the way Python does is its own research project.</p>
+
+  <h2>The model</h2>
+
+  <p>It's small: 26 million parameters, 8 layers of width 512, the usual modern parts (RMSNorm, rotary position embeddings, QK-norm, SwiGLU), trained from scratch. Training packs many steps of the same program into one long sequence, where each step can see the program listing and itself but not the other steps, which is exactly what inference with a cached listing looks like. On the 5090 that runs at about 600,000 tokens a second, so a 3-billion-token run takes under an hour and a half.</p>
+
+  <h2>Division is hard</h2>
+
+  <p>The first phase A model got 85% of held-out programs exactly right. Nearly everything it got wrong was <code>//</code> and <code>%</code>. Everything except arithmetic was close to perfect: 5 wrong steps in about 400,000. Addition and subtraction were almost free. Division was a disaster, especially by 6 through 9 (about half wrong) and by 11 and 13 (three quarters wrong).</p>
+
+  <p>The reason turned out to be the digit order. Least-significant-first is great for addition, because the first digit you write only depends on the last digits of the inputs. Long division goes the other way: you find the leading digit of the quotient first and the units digit last. I was asking the model to write the units digit first, which means doing all of the long division in its head before emitting a single token. Of 761 wrong <code>//</code> answers, 760 were wrong at exactly that first digit, with everything after it right. Doubling the model's depth barely helped (9% fewer errors).</p>
+
+  <p>So I tested output formats on division alone, in a small model trained just on <code>a op b</code>, which takes minutes instead of hours:</p>
+
+  <table>
+    <thead><tr><th>Output format</th><th><code>//</code> error</th><th><code>%</code> error</th></tr></thead>
+    <tbody>
+      <tr><td>Result, least significant digit first (what I had)</td><td>0.58%</td><td>2.2%</td></tr>
+      <tr><td>Result, most significant digit first</td><td>0.20%</td><td>13%</td></tr>
+      <tr><td>Quotient MSB-first as scratch, then the result</td><td>0.058%</td><td>0.32%</td></tr>
+      <tr><td>Same, and <code>%</code> also writes divisor × quotient</td><td>0.064%</td><td>0.13%</td></tr>
+    </tbody>
+  </table>
+
+  <p>Letting the model show its work, writing the quotient in the order you'd actually compute it before giving the answer, cut errors by about 10×. For <code>%</code>, also writing out divisor × quotient turns the remainder into plain subtraction. The harness ignores the scratch, but the model needs it. With that format and more division-heavy data, phase A hit <strong>99.81%</strong> exact output on 10,016 held-out programs. Phase B (loops and branches) passed at <strong>99.70%</strong>.</p>
+
+  <h2>The test set was lying to me</h2>
+
+  <p>Those held-out programs came from the same generators as the training data, just never trained on. So I also had a set of hand-written scripts, 200 per phase, written by Claude subagents in styles deliberately unlike the generators and checked so none of them appear in training. The phase A model that passed at 99.81% scored <strong>58.5%</strong> on them.</p>
+
+  <p>A held-out split of generated data measures the generator, not the model. Every one of these failures traced back to something the generator never made, or almost never:</p>
+
+  <ul>
+    <li><strong>Labels that look alike.</strong> Long hand-unrolled simulations that print "Round 1", "Round 2", "Round 3". Loading one of them, the model would copy from another. Generated phase A programs were short; these ran up to twice as long as anything in training.</li>
+    <li><strong>More than 10 variables.</strong> The generator used 3 to 10 names per script, so the tokens for the 11th variable onward were never trained. Every hand-written script with more than 10 variables failed.</li>
+    <li><strong><code>a, b, c = c, a, b</code>.</strong> A three-way swap is in 4.5% of the hand-written scripts and 0.01% of the training data.</li>
+    <li><strong>Python idioms people actually use.</strong> <code>x = a or 7</code>, chained comparisons like <code>a &lt; b &gt; c</code>, <code>range</code> with a step of 7, adding up booleans with <code>n += i &gt; 0</code>.</li>
+  </ul>
+
+  <p>None of that is the model failing to generalize, exactly. You can't hold out a pattern your training data never contains. So I wrote a coverage tool that compares how often each kind of step appears in the hand-written scripts versus the training data, and an "edge" generator that makes exactly the things the coverage tool flags. The current model is at <strong>88.5%</strong> on hand-written phase A and <strong>97%</strong> on phase B, and the remaining failures are mostly patterns the next round of edge data adds.</p>
+
+  <h2>Strings</h2>
+
+  <!-- TODO(Greg): update with c3/c4 results. -->
+  <p>Phase C, strings, is where things are now. The hardest single step is indexing: <code>s[i]</code> means finding the i-th character of a string that could be 48 characters long, which is a lookup the model has to do by position. The first phase C model got it wrong 17% of the time, the second 7%.</p>
+
+  <p>Before inventing another scratch format I ran the same kind of small probe. Plain indexing turns out to be perfectly learnable: about 50% wrong after 260,000 examples, 0.016% wrong after 1.3 million. It's a cliff, not a slope. The real model had seen about 200,000 indexing steps in total, because the generator only ever indexed with literals (<code>s[3]</code>), while people write <code>s[i]</code> inside loops over the string. A "walk" scratch format, where the model spells out characters up to the index, learned faster early on but ended up in the same place, so the fix is more data, not a new format.</p>
+
+  <p>On hand-written phase C scripts the model is at <strong>49%</strong>. Besides indexing, the failures are things like <code>print(a, b, sep=" -&gt; ")</code>: training only ever used six separators, so the model learned those six instead of copying whatever separator the script asked for. The next round of edge data uses all of them.</p>
+
+  <h2>Running it in your browser</h2>
+
+  <!-- TODO(Greg): fill in once built; see docs/WEB_DEMO.md in the pythonlm repo. -->
+  <p>The demo runs the whole thing on your machine. CPython 3.14, compiled to WebAssembly by the Pyodide project, compiles your script and runs the harness; the model, exported to ONNX and hosted on Hugging Face, runs on your GPU through WebGPU, falling back to the CPU. You can watch the state change one instruction at a time, next to what real Python prints for the same script.</p>
+
+  <p>After Cicero, I'm measuring the artifact that ships: the browser model goes through the same hand-written test sets as the PyTorch checkpoint before it goes up.</p>
+
+  <h2>What I learned</h2>
+
+  <ol>
+    <li><strong>Let the model show its work.</strong> A few scratch tokens in the right order did more for division than doubling the model.</li>
+    <li><strong>Generated test sets grade the generator.</strong> 99.8% on held-out generated programs and 58.5% on hand-written ones, from the same model. Write the hand-written set first.</li>
+    <li><strong>Measure coverage, not just accuracy.</strong> Every hand-written failure I traced came from a pattern that was rare or absent in training, and counting step kinds found those faster than reading failures.</li>
+    <li><strong>Probe in isolation.</strong> A tiny model trained for a few minutes on one operation settled questions (division format, indexing format) that full runs couldn't answer cleanly.</li>
+    <li><strong>Exact checkers are a gift.</strong> Because every training example is checked against real CPython at every instruction, I never had to wonder whether the data was wrong.</li>
+  </ol>
+
+  <h2>Try it</h2>
+
+  <p>The demo is <a href="../pythonlm/">here</a>. Paste in a script that sticks to integers, loops and strings and watch it run. It's a 26M-parameter model doing long division in its head, so be nice to it.</p>
+</article>
+
+<footer>
+  <span>Greg Meyer</span>
+  <span class="social">
+    <a href="https://github.com/gmmeyer" target="_blank" rel="noopener" aria-label="GitHub"><svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    <a href="https://twitter.com/GMMeyer" target="_blank" rel="noopener" aria-label="Twitter"><svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg></a>
+    <a href="https://www.linkedin.com/in/gregmmeyer/" target="_blank" rel="noopener" aria-label="LinkedIn"><svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg></a>
+  </span>
+</footer>
+
+</body>
+</html>
