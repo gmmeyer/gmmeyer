@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Building Cicero — Greg Meyer</title>
+  <meta name="description" content="Notes from training a small latin-only language model from scratch on one consumer GPU.">
+  <link rel="stylesheet" href="../style.css?v=4">
+</head>
+<body>
+
+<header>
+  <h1>Greg Meyer</h1>
+  <p class="tagline">Blog</p>
+  <nav class="contact">
+    <a href="../">Home</a>
+    <a href="../experience.html">Experience</a>
+    <a href="../projects.html">Projects</a>
+    <a href="../blog.html">Blog</a>
+  </nav>
+</header>
+
+<article class="post">
+  <header class="post-head">
+    <h1>Building Cicero</h1>
+    <p class="dek">Notes from training a small latin-only language model from scratch</p>
+    <time datetime="2026-07-02">July 2, 2026</time>
+    <p class="post-note">Originally posted on <a href="https://cicerollm.com/blog.html">cicerollm.com</a>.</p>
+  </header>
+
+  <p>I've built Cicero, a new small latin only language model.</p>
+
+  <h2>Why did I do this?</h2>
+
+  <p>Last year I bought a new computer, before the prices really went wild. And I knew I wanted to make it more future proof than I would otherwise, so I sprung for the 5090. My idea to justify it at the time was, maybe I'll learn how to train a language model. I'd never trained one before. Instead of doing that I just played a bunch of games on it.</p>
+
+  <p>A few weeks ago, while working on a small other side project, I thought: yea okay lets actually do this. And a question struck me: could you train a language model on only latin? The question is interesting. There's not a ton of latin language out there. What's survived from antiquity is not actually enough to train on, and most of what's survived isn't simple latin, it's very good literary latin. It would be a challenge to do, especially since I was only gonna train on my 5090. I wasn't going to rent out compute for a silly little side project.</p>
+
+  <p>I started out gathering that data programmatically (most of it is in fairly online accessible libraries, including some here on github that you can just clone). I tried to train a model on just that. I did a test run of it on a small segment and while it wasn't really producing coherent latin, it was producing something that looked like latin.</p>
+
+  <p>So I asked: how can we get it to produce real latin?</p>
+
+  <h2>How I went about it</h2>
+
+  <p>I tried pulling a few different levers. First I just tried to get as much latin as I could. Mixing in a ton of different latin libraries and spreading out to medieval and later latin writing. I tried a run dumping all of that in there. It didn't really help. The model became pretty confused and started largely spitting out bible verse names. You can tell where it might have gotten some of that from! So, instead, I tried a run of the cleanest prose I could find. This was actually pretty successful, it produced a model that could spit out vaguely coherent latin. Again, it was not really able to consistently spit out coherent latin.</p>
+
+  <p>I'm not going to go through all of what I did here.</p>
+
+  <h2>Benchmarking</h2>
+
+  <p>Before we get into my next steps, I'll take a little time to discuss how I benchmarked my model. I used a cloze score. A cloze score is when you remove words from a passage and have it fill them in. I asked the question: how much can we push the cloze score without killing myself or actually having to rent much compute? I didn't think I could get it to a 100%. I aimed for a 75%.</p>
+
+  <h2>OCR Pipeline</h2>
+
+  <p>The Internet Archive has a vast array of latin language on it. However, most of it is not in a text format. A lot of it was OCRd at some point, but it was over 10 years ago, and the OCR is really bad. I tried with the old OCR and it just made the model more psychotic. It's full of nonsense text and unicode errors. So I tried to re-ocr it with tesseract. (I tried a few modern OCR tools but tesseract did best). This helped a little bit but it wasn't enough, and this data was still very dirty. I would likely have to go through and manually label every data source, which wasn't really scalable for a fun little side project.</p>
+
+  <h2>Synthetic Data</h2>
+
+  <p>The final thing I tried was creating synthetic data. I bought some Kimi K2.5 credits (I benchmarked a few providers and kimi was both the clear cheapest and the best quality). And I created some synthetic latin, I also translated some English and Greek classics into Latin. This finally moved the needle and began to get the cloze scores up.</p>
+
+  <h2>Everything else that didn't work</h2>
+
+  <p>This project produced a genuinely impressive pile of negative results, and I think they're the most interesting part, so here's a quick tour:</p>
+
+  <ul>
+    <li><strong>Adding any single extra source to the good data.</strong> After the synthetic win, I took my best corpus and added exactly one broad source at a time: latin wikipedia, Project Gutenberg's latin, the Patrologia (a giant 19th-century collection of church latin), latin wikisource, a few medieval and renaissance collections. Ten runs. Every single one made the model worse. Latin wikisource was the most spectacular failure: the model scored 25% on the cloze test, which is <em>worse than random guessing</em>. It fit the data just fine, it just confidently learned grammar that contradicts actual latin, because wikisource is full of uncorrected OCR uploads and weird 19th-century editorial latin.</li>
+    <li><strong>"Cleaning" the data.</strong> I had a cleanup pass that stripped macrons (ā &rarr; a) and normalized ligatures, on the theory that more uniform text is easier to learn. In two out of three controlled tests, the cleaned version did worse than the raw version. Macrons mark vowel length, which is real grammatical information in latin — I was throwing away signal the model was actually using. The one place cleanup helped was wikisource, where stripping the {{wiki markup}} outweighed the macron damage. Lesson: don't "normalize" things you don't understand.</li>
+    <li><strong>More synthetic data.</strong> Roughly 2.5x-ing the synthetic corpus made the model slightly worse, not better. Synthetic data has a sweet spot, not a more-is-better curve.</li>
+    <li><strong>A fancier tokenizer.</strong> I rebuilt the tokenizer (unigram model plus BPE-dropout, which is supposed to help with morphologically rich languages, and latin is nothing if not morphologically rich). It regressed, and it regressed worst on the held-out items, which means it broke generalization specifically.</li>
+    <li><strong>A modern architecture.</strong> I swapped the GPT-2-style stack for a llama-style one (RoPE, RMSNorm, SwiGLU, the works). It trained faster and got slightly better loss, but it generalized worse and memorized more. The architecture was not the wall.</li>
+  </ul>
+
+  <p>One diagnostic in the middle of all this pointed somewhere useful though. I trained mini models on 10%, 30%, and 100% of my good data, same recipe, and the loss just kept getting better with more data, monotonically. So the model was still data-hungry — even though every attempt to actually feed it more data had made it worse. Those two facts together really only have one resolution: the extra data wasn't poison exactly, it was crowding out the good data at the short training lengths I was using.</p>
+
+  <h2>Breakthrough</h2>
+
+  <p>I tried a few more different things, but most of them ended up being middling to no help. The real issue was that I simply didn't have enough data and so much of the data was dirty. However, it's possible that I was thinking about this wrong — maybe I was just not training long enough. So, I used (almost) all the data I had collected, I cleaned it up a bit, and then I ran a much longer and larger training run. The loss vals looked a lot better and at the end the cloze score got above 80%. We got to a B!</p>
+
+  <p>However, it still wasn't quite perfect. I tried a few more things:</p>
+
+  <ol>
+    <li>LAWA averaging, where you average together the final few checkpoints. This simply didn't work, the scores were worse.</li>
+    <li>Retrieval Augmentation, where I created a library of some of the best latin. This also didn't work.</li>
+    <li>Post Training</li>
+  </ol>
+
+  <h2>Post Training</h2>
+
+  <p>The last big lever was post training. I ran two stages on top of the big model. First, continued pretraining on only the cleanest classical prose, to sharpen the register. Second, a targeted grammar curriculum: synthetic latin passages written specifically to exercise the grammar the model was worst at (preposition cases, subjunctive subordination, participle agreement, that kind of thing — I knew exactly which phenomena were weak because the cloze test is broken down by phenomenon).</p>
+
+  <p>The curriculum had my favorite failure of the whole project. I generated the first version with Kimi and asked it to grade its own output: it said 95% of it was clean latin. Then I had Claude Opus judge the same passages independently, and it flagged about 40% of them for real grammar errors. Models grade their own homework very generously. I threw the whole batch out, regenerated the curriculum with Opus as the writer, and then kept only the passages that two independent judges both approved. For synthetic grammar data, it turns out the capability of the generator is the whole ballgame — no amount of prompt engineering was going to rescue the first batch.</p>
+
+  <p>The results were honestly mixed. I had pre-registered statistical gates for these runs and neither one cleared them (the held-out improvements were real but not significant at the sample sizes I had). But the curriculum model improved on every held-out eval I cared about: literary cloze went from 0.75 to 0.82, the blind pack from 0.69 to 0.72, and on a sealed pack targeting the model's known weaknesses it went from 0.75 to 0.82. The textbook cloze actually went <em>down</em> a bit, from 0.80 to 0.77 — because the curriculum shed a bunch of medieval and neo-latin patterns that the original training mix had rewarded.</p>
+
+  <h2>Deciding which model to ship</h2>
+
+  <p>And that set up the most embarrassing part of the project: I flip-flopped on the release three times in one day.</p>
+
+  <p>On paper the 0.80 model is the best model. It has the highest score on the headline benchmark, and the post-trained model failed its statistical gates, so the defensible, by-the-book decision was to ship the 0.80 model. That's what I did. Then I actually played with the live demo, and the 0.80 model did things like this, unprompted:</p>
+
+  <pre><code>]] Italia Aevo Aevo est urbs maxima Hispaniae</code></pre>
+
+  <p>Literal wiki markup, leaking out of the model, followed by a degenerate loop, followed by a sentence claiming Italy is the largest city in Spain. On other prompts it would drift into lists of medieval kings. All of that traces straight back to the corpus — the big training mix is mostly wiki, church, and 19th-century latin, and it shows.</p>
+
+  <p>The curriculum model scores lower on the textbook benchmark, but ask it to continue a classical prompt and it writes things like <em>"copias per montes asperas duxit, ne sine commeatu in hostium fines descenderet"</em> — he led his troops through rough mountains, so that he wouldn't descend into enemy territory without supplies. That's real latin. Grammatical, coherent, and in the right register.</p>
+
+  <p>So the curriculum model is what shipped. The lesson here is one I thought I already knew, but apparently needed to learn personally: the benchmark picks the best test-taker, not the best writer. My cloze test was partly rewarding in-distribution memorization, and the whole point of the public model is to <em>generate</em> latin. For a generative model, live generation gets a vote.</p>
+
+  <h2>Getting it into your browser</h2>
+
+  <p>The model runs entirely in your browser — an int8-quantized ONNX export, about 100MB, running on ONNX Runtime Web. No server, no API. Getting there had two good bugs:</p>
+
+  <ol>
+    <li>ONNX Runtime's WebGPU backend silently produced garbage logits for this model. Same file, same weights: coherent latin on the CPU/WASM backend, token salad on WebGPU. The site defaults to WASM now.</li>
+    <li>Generation never stopped, ever, because the tokenizer conversion left the end-of-sequence token null, so the model would happily fill the entire context window. Pinning the SentencePiece token ids fixed it. I also added a repetition penalty, which helps a small model like this a lot.</li>
+  </ol>
+
+  <p>And a confession for the methodologically pure: every benchmark number in this post was measured on the full-precision PyTorch checkpoints. The quantized browser model was only ever checked by eye, after it was deployed. It's fine — but if I did this again, the artifact that ships would be the artifact that gets measured.</p>
+
+  <h2>What I actually learned</h2>
+
+  <ol>
+    <li><strong>At this scale, data quality dominates — but the full story is subtler.</strong> At a fixed short training budget, cleaner-but-smaller beat bigger-but-noisier every single time I measured it. But the scaling diagnostic showed the model was genuinely data-starved, and the breakthrough came from using (almost) all the data <em>and</em> training much longer. Both things were true at once: "quality beats quantity" and "the model needs more data."</li>
+    <li><strong>Never let a model grade its own output.</strong> 95% self-reported vs 59% independently judged is not a rounding error.</li>
+    <li><strong>Benchmarks are a proxy.</strong> The highest-scoring model leaked wiki markup at users. Ship on live behavior, not just the scorecard.</li>
+    <li><strong>Negative results are cheap if you set up for them.</strong> Nearly everything I tried didn't work, and that was fine, because every experiment was a controlled A/B with a decision rule written down before training started. The expensive failure mode isn't a bad run, it's fooling yourself about a bad run.</li>
+    <li><strong>Don't clean what you don't understand.</strong> Stripping macrons felt like normalization and was actually deleting grammar.</li>
+  </ol>
+
+  <h2>Try it</h2>
+
+  <p>The model is live <a href="https://cicerollm.com/">right here</a> — it runs locally in your browser, so be patient with it, it's a small model on your hardware. The weights are on Hugging Face at <a href="https://huggingface.co/gmmeyer/cicero">gmmeyer/cicero</a>. It is not going to write you a lost book of Livy. But it writes recognizable, often genuinely coherent latin, it was trained from scratch on one consumer GPU in my house, and the whole thing cost less than $200 in API credits on top of the electricity.</p>
+
+  <p>Not bad for a silly little side project.</p>
+</article>
+
+<footer>
+  <span>Greg Meyer</span>
+  <span class="social">
+    <a href="https://github.com/gmmeyer" target="_blank" rel="noopener" aria-label="GitHub"><svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    <a href="https://twitter.com/GMMeyer" target="_blank" rel="noopener" aria-label="Twitter"><svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg></a>
+    <a href="https://www.linkedin.com/in/gregmmeyer/" target="_blank" rel="noopener" aria-label="LinkedIn"><svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg></a>
+  </span>
+</footer>
+
+</body>
+</html>
