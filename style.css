@@ -84,6 +84,57 @@ h2 {
   font-size: 0.9rem;
 }
 .job p.links a { margin-right: 1rem; }
+.post { margin-top: 3rem; }
+.post-head h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+.post-head time {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.post h2 {
+  margin: 2.25rem 0 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 650;
+  text-transform: none;
+  letter-spacing: -0.005em;
+  color: var(--text);
+}
+.post p { margin: 0 0 1rem; }
+.diagram { margin: 1.75rem 0; }
+.diagram-scroll { overflow-x: auto; }
+.diagram svg {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+  font-family: inherit;
+}
+.diagram text { fill: var(--text); }
+.diagram text.quiet { fill: var(--muted); }
+.diagram .line {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.25;
+}
+.diagram rect.accent {
+  fill: var(--link);
+  fill-opacity: 0.12;
+  stroke: var(--link);
+  stroke-width: 2;
+}
+.diagram figcaption {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
 footer {
   margin-top: 4rem;
   padding-top: 1.5rem;
