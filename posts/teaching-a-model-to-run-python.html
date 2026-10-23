@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Teaching a Model to Run Python — Greg Meyer</title>
   <meta name="description" content="A 26M-parameter transformer, trained from scratch on one GPU, that executes CPython bytecode one instruction at a time. It runs in your browser.">
+  <link rel="canonical" href="https://gmmeyer.com/posts/teaching-a-model-to-run-python.html">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Greg Meyer">
+  <meta property="og:title" content="Teaching a Model to Run Python">
+  <meta property="og:description" content="A 26M-parameter transformer, trained from scratch on one GPU, that executes CPython bytecode one instruction at a time. It runs in your browser.">
+  <meta property="og:url" content="https://gmmeyer.com/posts/teaching-a-model-to-run-python.html">
+  <meta property="og:image" content="https://gmmeyer.com/img/og/teaching-a-model-to-run-python.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="article:published_time" content="2026-10-30">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@GMMeyer">
   <link rel="stylesheet" href="../style.css?v=5">
 </head>
 <body>
@@ -23,7 +35,10 @@
 <!--
   DRAFT v2. Before publishing:
   - "Why did I do this?" is my guess at your reasons. Say it your way.
-  - The date is a placeholder.
+  - The date is a placeholder, here and in article:published_time above.
+  - The social card (img/og/teaching-a-model-to-run-python.png) isn't rendered
+    yet: after setting the date, run python3 _cards/build.py on the Mac (on
+    Windows the card's font stack falls back to Segoe UI).
   - The demo (../pythonlm/) loads the model from huggingface.co/gmmeyer/pythonlm,
     which is private until you pick a license. The GitHub repo is private too.
     Both need to be public before this goes up.
