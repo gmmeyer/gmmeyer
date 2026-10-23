@@ -1,0 +1,78 @@
+[
+ {
+  "title": "Long division",
+  "src": "n = 487\nq = n // 13\nprint(q)\nprint(n % 13)\n"
+ },
+ {
+  "title": "Numbers: Hotel: 5 nights at 89 plus a 35 cleaning fee",
+  "src": "# hotel: 5 nights at 89 plus a 35 cleaning fee\nnights = 5\nprint(nights * 89 + 35)\n"
+ },
+ {
+  "title": "Numbers: Painting the bedroom",
+  "src": "# painting the bedroom\nwall_w = 12\nwall_h = 9\nwalls = 4\ndoor = 21\nwindow = 15\narea = wall_w * wall_h * walls - door - window * 2\nprint(area)\nper_can = 40\ncans = (area + per_can - 1) // per_can\nprint(cans)\ncoats = 2\nprint(cans * coats)\n"
+ },
+ {
+  "title": "Numbers: A teacher shares bags of candy with a class of 23.",
+  "src": "# A teacher shares bags of candy with a class of 23.\n# Each time the candy is split evenly between the children present;\n# the remainder goes into the teacher's jar.\n\nclass_size = 23\njar = 0\nevery_day = 0\n\nprint(\"Monday: bag of 157\")\nbag = 157\nkids = class_size\nevery_day += bag // kids\njar += bag % kids\nprint(bag // kids)\nprint(jar)\n\nprint(\"Tuesday: 3 absent\")\n# the jar is emptied into the new bag\nbag = 96 + jar\njar = 0\nkids = class_size - 3\nevery_day += bag // kids\njar += bag % kids\nprint(bag // kids)\nprint(jar)\n\nprint(\"Wednesday: bag of 64\")\nbag = 64\nkids = class_size\nevery_day += bag // kids\njar += bag % kids\nprint(bag // kids)\nprint(jar)\n\nprint(\"Thursday: 4 helpers\")\n# the jar is split between the 4 helpers who cleaned up\nhelpers = 4\nprint(jar // helpers)\njar %= helpers\nprint(jar)\n\nprint(\"--- week ---\")\n# candy for a child who came every day\nprint(every_day)\nprint(jar)\n"
+ },
+ {
+  "title": "Numbers: A week of trading one stock. The price moves every day,\u2026",
+  "src": "# A week of trading one stock. The price moves every day, sometimes\n# down. We buy and sell whole shares only, starting with 600 coins.\n\nprice = 48\ncash = 600\nshares = 0\nspent = 0\n\nprint(\"Monday: buy 10\")\nshares += 10\nspent += 10 * price\ncash -= 10 * price\nprint(cash)\n\nprint(\"Tuesday\")\nchange = -6\nprice += change\nprint(price)\nprint(shares * price)\n\nprint(\"Wednesday: buy the dip\")\nchange = -9\nprice += change\nspent += 3 * price\ncash -= 3 * price\nshares += 3\nprint(price)\nprint(cash)\nprint(shares * price)\n\nprint(\"Thursday\")\nchange = 17\nprice += change\nprint(price)\nprint(shares * price)\n\nprint(\"Friday: sell everything\")\nchange = -2\nprice += change\ncash += shares * price\nprint(price)\nprint(cash)\n\nprint(\"--- week ---\")\n# average price paid per share\nprint(spent // shares)\nshares = 0\ngain = cash - 600\nprint(gain)\n# 1 percent of 600 is 6\nprint(gain // 6)\nprint(gain % 6)\n"
+ },
+ {
+  "title": "Numbers: Rabbits in a meadow, followed one generation at a time.",
+  "src": "# Rabbits in a meadow, followed one generation at a time.\n# Every 3 rabbits produce 1 baby (rounded down).\n# The foxes catch (rabbits % 7) plus one rabbit per fox,\n# and every 15 rabbits still alive attract one more fox.\n\nrabbits = 20\nfoxes = 2\n\nprint(\"Generation 1\")\nbirths = rabbits // 3\ndeaths = rabbits % 7 + foxes\nrabbits += births - deaths\nfoxes += rabbits // 15\nprint(rabbits)\nprint(foxes)\n\nprint(\"Generation 2\")\nbirths = rabbits // 3\ndeaths = rabbits % 7 + foxes\nrabbits += births - deaths\nfoxes += rabbits // 15\nprint(rabbits)\nprint(foxes)\n\nprint(\"Generation 3\")\nbirths = rabbits // 3\ndeaths = rabbits % 7 + foxes\nrabbits += births - deaths\nfoxes += rabbits // 15\nprint(rabbits)\nprint(foxes)\n\nprint(\"Generation 4: a good spring, twice the babies\")\nbirths = rabbits // 3 * 2\ndeaths = rabbits % 7 + foxes\nrabbits += births - deaths\nfoxes += rabbits // 15\nprint(rabbits)\nprint(foxes)\n\n# a hard winter: a quarter of the foxes leave the meadow\nprint(\"Generation 5: hard winter\")\nfoxes -= foxes // 4\nbirths = rabbits // 3\ndeaths = rabbits % 7 + foxes\nrabbits += births - deaths\nprint(rabbits)\nprint(foxes)\n\nprint(\"--- summary ---\")\nprint(rabbits - 20)\nprint(foxes - 2)\n"
+ },
+ {
+  "title": "Numbers: The final boss hides behind a magic shield.",
+  "src": "# The final boss hides behind a magic shield.\n# While the shield holds, it soaks up half of every hit (rounded down).\n# The knight's sword gets 5 points sharper after every round.\n\nboss_hp = 300\nshield = 40\nsword = 22\nknight_hp = 90\nboss_power = 13\n\nprint(\"Round 1\")\nabsorbed = sword // 2\nshield -= absorbed\nboss_hp -= sword - absorbed\nknight_hp -= boss_power\nsword += 5\nprint(boss_hp)\nprint(shield)\n\nprint(\"Round 2\")\nabsorbed = sword // 2\nshield -= absorbed\nboss_hp -= sword - absorbed\nknight_hp -= boss_power\nsword += 5\nprint(boss_hp)\nprint(shield)\n\nprint(\"Round 3\")\nabsorbed = sword // 2\nshield -= absorbed\nboss_hp -= sword - absorbed\nknight_hp -= boss_power\nsword += 5\nprint(boss_hp)\nprint(shield)\n\nprint(\"The shield shatters!\")\n# the boss is furious and hits harder\nboss_power += 5\n\nprint(\"Round 4\")\nboss_hp -= sword * 2\nknight_hp -= boss_power\nprint(boss_hp)\nprint(knight_hp)\n\nprint(\"Round 5: elixir\")\n# the elixir doubles the knight's health before the hit\nknight_hp *= 2\nboss_hp -= sword * 3\nknight_hp -= boss_power\nprint(boss_hp)\nprint(knight_hp)\n\nprint(\"Round 6\")\nboss_hp -= sword * 2 + 4\nprint(boss_hp)\n\nprint(\"--- summary ---\")\nprint(knight_hp)\nprint(sword)\n# overkill: how far below zero the boss went\nprint(-boss_hp)\n"
+ },
+ {
+  "title": "Loops: Emptying the coin jar",
+  "src": "# emptying the coin jar\nquarters = 7\ndimes = 12\nnickels = 9\npennies = 23\n\ncents = quarters * 25 + dimes * 10 + nickels * 5 + pennies\nprint(cents)\nprint(cents // 100)\nprint(cents % 100)\ncoins = quarters + dimes + nickels + pennies\nprint(coins)\nprint(cents >= 300)\n"
+ },
+ {
+  "title": "Loops: Give change for 94 cents with as few coins as possible",
+  "src": "# give change for 94 cents with as few coins as possible\nowed = 94\nquarters = dimes = nickels = 0\nwhile owed >= 25:\n    owed -= 25\n    quarters += 1\nwhile owed >= 10:\n    owed -= 10\n    dimes += 1\nwhile owed >= 5:\n    owed -= 5\n    nickels += 1\npennies = owed\nprint(quarters)\nprint(dimes)\nprint(nickels)\nprint(pennies)\n"
+ },
+ {
+  "title": "Loops: Shipping cost (dollars) by package weight (ounces)",
+  "src": "# shipping cost (dollars) by package weight (ounces)\nfor weight in range(4, 80, 15):\n    if weight <= 8:\n        cost = 4\n    elif weight <= 16:\n        cost = 6\n    elif weight <= 48:\n        cost = 6 + (weight - 16) // 8\n    else:\n        cost = 12\n    print(cost)\n"
+ },
+ {
+  "title": "Loops: How many pizzas? 3 slices a guest, 8 slices a pizza",
+  "src": "# how many pizzas? 3 slices a guest, 8 slices a pizza\nfor guests in range(5, 30, 6):\n    slices = guests * 3\n    pizzas = (slices + 7) // 8\n    spare = pizzas * 8 - slices\n    print(pizzas)\n    if spare >= 4:\n        print(\"leftovers for lunch\")\n"
+ },
+ {
+  "title": "Loops: Every third house on the block: odd numbers on the left\u2026",
+  "src": "# every third house on the block: odd numbers on the left side\nleft = right = 0\nfor house in range(1, 30, 3):\n    if house % 2 == 0:\n        right += 1\n    else:\n        left += 1\nprint(left)\nprint(right)\nprint(left == right)\n"
+ },
+ {
+  "title": "Loops: Single elimination bracket, odd team out gets a bye",
+  "src": "# single elimination bracket, odd team out gets a bye\nteams = 50\nrounds = 0\nwhile teams > 1:\n    if teams % 2 == 1:\n        teams += 1\n    teams //= 2\n    rounds += 1\n    print(teams)\nprint(rounds)\n"
+ },
+ {
+  "title": "Strings: Birthday banner",
+  "src": "name = \"Rosa\"\nage = 31\nsender = \"Tom & Ali\"\nmsg = \"Happy birthday, \" + name + \"!\"\nwidth = len(msg) + 4\nprint(\"*\" * width)\nprint(\"* \" + msg + \" *\")\nprint(\"*\" * width)\nprint(f\"{age} looks good on you.\")\nprint(\"love,\", sender, sep=\"\\n  \")\n"
+ },
+ {
+  "title": "Strings: Roman numerals",
+  "src": "sym = \"IVXLCDM\"\nn = 649\nm = n\nout = \"\"\np = 0\nwhile m > 0:\n    d = m % 10\n    one = sym[p]\n    if d == 9:\n        part = one + sym[p + 2]\n    elif d >= 5:\n        part = sym[p + 1] + one * (d - 5)\n    elif d == 4:\n        part = one + sym[p + 1]\n    else:\n        part = one * d\n    out = part + out\n    m //= 10\n    p += 2\nprint(n, out)\n"
+ },
+ {
+  "title": "Strings: Tic-tac-toe board",
+  "src": "# Tic-tac-toe from nine one-character cells after a fixed game.\n# X takes the anti-diagonal on the seventh move.\na = b = c = d = e = f = g = h = i = \".\"\ne = \"X\"\na = \"O\"\nc = \"X\"\nb = \"O\"\nd = \"X\"\nf = \"O\"\ng = \"X\"\nprint(a, b, c, sep=\"|\")\nprint(\"-+-+-\")\nprint(d, e, f, sep=\"|\")\nprint(\"-+-+-\")\nprint(g, h, i, sep=\"|\")\nwinner = \"nobody\"\nif a != \".\" and a == b and b == c:\n    winner = a\nif d != \".\" and d == e and e == f:\n    winner = d\nif g != \".\" and g == h and h == i:\n    winner = g\nif a != \".\" and a == e and e == i:\n    winner = a\nif c != \".\" and c == e and e == g:\n    winner = c\nprint(\"winner:\", winner)\n"
+ },
+ {
+  "title": "Strings: Run-length encoding",
+  "src": "s = \"aaabbcaaaa\"\nout = \"\"\nrun = 1\nfor i in range(1, len(s)):\n    if s[i] == s[i - 1]:\n        run += 1\n    else:\n        out = out + s[i - 1] + str(run)\n        run = 1\nout = out + s[-1] + str(run)\nprint(out, len(out))\n"
+ },
+ {
+  "title": "Strings: Palindromes",
+  "src": "for trial in range(2):\n    if trial == 0:\n        word = \"level\"\n    else:\n        word = \"lever\"\n    n = len(word)\n    i = 0\n    same = True\n    while i < n // 2:\n        if word[i] != word[n - 1 - i]:\n            same = False\n            break\n        i += 1\n    if same:\n        print(word, \"reads the same both ways\")\n    else:\n        print(word, \"is not a palindrome (\" + word[i] + \" vs \" + word[n - 1 - i] + \")\")\n"
+ },
+ {
+  "title": "Strings: Battery meter",
+  "src": "level = 73\nwhile level > 0:\n    filled = level // 10\n    gauge = \"[\" + \"|\" * filled + \".\" * (10 - filled) + \"]\"\n    print(\"battery\", gauge, str(level) + \"%\")\n    if level < 30:\n        print(\"plug in soon\")\n    level -= 25\nprint(\"screen off\")\n"
+ }
+]

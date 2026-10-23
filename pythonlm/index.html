@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>pythonlm: a neural network running Python</title>
+  <meta name="description" content="A 26M-parameter transformer executes CPython 3.14 bytecode one instruction at a time, in your browser.">
+  <style>
+    :root {
+      --bg: #ffffff; --text: #1a1a1a; --muted: #6b6b6b; --rule: #e4e4e4; --link: #0b5fa5;
+      --panel: #f6f6f6; --hl: #fff2b3; --ok: #1f7a3a; --bad: #b3261e;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #131313; --text: #e6e6e6; --muted: #9a9a9a; --rule: #2c2c2c; --link: #6fb3e8;
+              --panel: #1c1c1c; --hl: #4a3f12; --ok: #5cc27a; --bad: #f28b82; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0 auto; padding: 1.5rem 1.25rem 3rem; max-width: 72rem; background: var(--bg); color: var(--text);
+           font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1 { font-size: 1.5rem; margin: 0; letter-spacing: -0.01em; }
+    .dek { color: var(--muted); margin: 0.25rem 0 0; }
+    .status { margin: 1rem 0; padding: 0.5rem 0.75rem; background: var(--panel); border-radius: 6px; color: var(--muted);
+              display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9rem; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1rem; }
+    @media (max-width: 52rem) { .grid { grid-template-columns: minmax(0, 1fr); } }
+    .panel { background: var(--panel); border-radius: 6px; padding: 0.6rem 0.75rem; min-width: 0; }
+    .panel h2 { margin: 0 0 0.4rem; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    textarea { width: 100%; height: 19rem; resize: vertical; border: 1px solid var(--rule); border-radius: 4px; padding: 0.5rem;
+               background: var(--bg); color: var(--text); font: 13.5px/1.45 var(--mono); tab-size: 4; }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+    button, select { font: inherit; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 4px; border: 1px solid var(--rule);
+                     background: var(--bg); color: var(--text); cursor: pointer; }
+    button.primary { background: var(--link); border-color: var(--link); color: #fff; }
+    button:disabled { opacity: 0.45; cursor: default; }
+    .mono { font: 13px/1.45 var(--mono); }
+    .listing { height: 19rem; overflow: auto; }
+    .ins { display: grid; grid-template-columns: 2.6rem 2rem 9.5rem 1fr; gap: 0.25rem; padding: 0 0.25rem; white-space: pre; }
+    .ins .n, .ins .line { color: var(--muted); }
+    .ins.now { background: var(--hl); border-radius: 3px; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    .state { min-height: 6rem; max-height: 12rem; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+    .vars td { padding: 0 0.75rem 0 0; vertical-align: top; }
+    .vars td:first-child { color: var(--muted); }
+    pre.out { margin: 0; min-height: 6rem; max-height: 16rem; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+    .badge { font-weight: 600; }
+    .badge.ok { color: var(--ok); } .badge.bad { color: var(--bad); }
+    .note { color: var(--muted); font-size: 0.88rem; margin-top: 1.25rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>pythonlm</h1>
+    <p class="dek">A 26M-parameter transformer runs your Python, one bytecode instruction at a time, in this browser tab.
+      <a href="../posts/teaching-a-model-to-run-python.html">How it works</a></p>
+  </header>
+
+  <div class="status"><span id="status">Loading…</span><span id="backend"></span></div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Your script</h2>
+      <textarea id="src" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+      <div class="controls">
+        <button id="run" class="primary" disabled>Run</button>
+        <button id="pause" disabled>Pause</button>
+        <button id="stop" disabled>Stop</button>
+        <select id="speed" aria-label="Speed">
+          <option value="0">As fast as it can</option>
+          <option value="60">Watchable</option>
+          <option value="400">Slow</option>
+        </select>
+        <select id="examples" aria-label="Examples"><option value="">Examples…</option></select>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Bytecode (CPython 3.14)</h2>
+      <div id="listing" class="listing mono"></div>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="panel"><h2>Stack (top first)</h2><div id="stack" class="state mono"></div></div>
+    <div class="panel"><h2>Variables</h2><div id="vars" class="state mono"></div></div>
+  </div>
+
+  <div class="two">
+    <div class="panel"><h2>The model prints <span id="badge" class="badge"></span></h2><pre id="model-out" class="out mono"></pre></div>
+    <div class="panel"><h2>Python prints</h2><pre id="python-out" class="out mono"></pre></div>
+  </div>
+
+  <p class="note">Integers (to ±999), variables, arithmetic, <code>if</code>/<code>while</code>/<code>for … in range()</code>,
+    and strings: concatenation, f-strings, <code>str()</code>, <code>len()</code>, indexing, <code>print()</code>.
+    Anything else is refused before it runs. Python itself only compiles the script to bytecode and prints its own
+    answer for comparison; every step on the left is the model's.</p>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
