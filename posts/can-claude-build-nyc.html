@@ -17,7 +17,7 @@
   <meta property="article:published_time" content="2026-10-22">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@GMMeyer">
-  <link rel="stylesheet" href="../style.css?v=4">
+  <link rel="stylesheet" href="../style.css?v=5">
 </head>
 <body>
 
@@ -38,11 +38,22 @@
     <time datetime="2026-10-22">October 22, 2026</time>
   </header>
 
+  <figure class="shot">
+    <video controls playsinline preload="none" width="1280" height="720" poster="../media/can-claude-build-nyc/highlights-poster.jpg">
+      <source src="../media/can-claude-build-nyc/highlights.mp4" type="video/mp4">
+      <a href="../media/can-claude-build-nyc/highlights.mp4">Watch the video</a>
+    </video>
+    <figcaption>NYC Heroes in a minute: super speed, web swinging, flight and a superhero landing, then the city from Midtown to Brooklyn, day into night.</figcaption>
+  </figure>
   <h2>City of Heroes</h2>
   <p>Long ago, when I was a kid, I loved playing MMOs. There was one that was really fun, not really because of the fighting tech, but because of the movement. The movement was really fun (at least for its time). And no game really captured that until Spider-Man did 14 years later.</p>
   <p>My real curiosity as well was this: what can you build in a few days with modern tech? I did not want to create a finished game. I wanted to create a somewhat unpolished gameplay demo. A finished game would require a story and polished gameplay. But how much of a fairly small demo can you create?</p>
   <p>So, when the whole discussion around AI games erupted with Tim Sweeney I started out asking: could I create a simple superhero game that let you move around the city as well as City of Heroes? But I quickly came up with a second question: could I put this in NYC?</p>
 
+  <figure class="shot">
+    <img src="../media/can-claude-build-nyc/01-hero-flying-over-central-park.jpg" width="1344" height="756" loading="lazy" alt="The hero, in a teal suit and cape, flying over Central Park with Manhattan on both sides">
+    <figcaption>Flying over Central Park.</figcaption>
+  </figure>
   <h2>Unreal and Godot</h2>
   <p>Because of Tim Sweeney I decided to start making it in Unreal, but I wanted to embed this in a webpage. I didn't want anyone to have to install this. (Installing something is great but this is gonna be at best a little demo, I'm not building a game I'm gonna sell.) Unfortunately, Unreal deprecated its HTML5 interface a few years ago. So I had to use Godot.</p>
 
@@ -50,16 +61,59 @@
   <p>NYC is a very well documented city. Every building is documented in open data. There are tons of pictures of buildings. It should be possible to do. And I don't really wanna pay for the Google Maps data, I'd prefer to just build this up myself. So, what I did was I had Claude build out the first version of the movement tech, and in parallel to build out the city. We started with Manhattan. It found all the details from the city's open data and started building.</p>
   <p>The buildings didn't look (on the facade) correct. They looked terrible. Some buildings were not correct. There were no trees. However, it was recognizably NYC.</p>
   <p>We then used a dated 3D model that the city had put out. This got us closer, but still not quite there (in 2014, when it was released, the Edge was not yet completed and most of the supertalls didn't exist, we constructed those from other data).</p>
-  <p>There are approximately 1.08 million buildings in NYC. After Manhattan was finished, we built all of them. 300k of them have exact setbacks. For a smaller subset of "recognizable" landmarks (Empire State, Guggenheim, etc), we made their facades and shapes look realistic.</p>
 
+  <figure class="shot">
+    <img src="../media/can-claude-build-nyc/02-midtown-from-top-of-the-rock.jpg" width="1344" height="756" loading="lazy" alt="Midtown Manhattan from Top of the Rock in late-afternoon light, the Empire State Building at the center">
+    <figcaption>Looking south from Top of the Rock toward the Empire State Building.</figcaption>
+  </figure>  <p>There are approximately 1.08 million buildings in NYC. After Manhattan was finished, we built all of them. 300k of them have exact setbacks. For a smaller subset of "recognizable" landmarks (Empire State, Guggenheim, etc), we made their facades and shapes look realistic.</p>
+
+  <div class="shot-pair">
+    <figure class="shot">
+      <img src="../media/can-claude-build-nyc/05-brownstone-brooklyn.jpg" width="1344" height="756" loading="lazy" alt="Rows of brownstones and street trees in Brooklyn, seen from above">
+      <figcaption>Brownstone Brooklyn.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="../media/can-claude-build-nyc/04-statue-of-liberty.jpg" width="1344" height="756" loading="lazy" alt="The Statue of Liberty on Liberty Island, with the Lower Manhattan skyline across the harbor">
+      <figcaption>The Statue of Liberty, with Lower Manhattan behind her.</figcaption>
+    </figure>
+  </div>
   <h2>How it works</h2>
   <p>We used Godot to export to WebGL. We run this on Cloudflare. A Cloudflare Worker streams the tile data to the browser. The whole city is about 2GB of data compressed, 7GB uncompressed. We're not going to load that all in one go. We have to load it in sequence. So, the game engine guesses where you will be in 3 seconds and loads those tiles in.</p>
   <p>We load in 3 different levels of detail. There's far away, where nearly the whole city is loaded if you are in Times Square or any other central location (this is only on the "high" graphics setting). This is so, wherever you are, you can see the skyline. There's close by, that's loaded in a lower level of detail. And then there's very close, that's loaded in full detail. But if you're flying at 150m/s, you have to guess where you will be next. Loading in just where you are now is not enough. So, we have the engine guess where you will be next and load that in.</p>
 
+  <figure class="shot">
+    <img src="../media/can-claude-build-nyc/06-whole-city-from-the-harbor.jpg" width="1344" height="756" loading="lazy" alt="The city seen from high above New York Harbor, the Manhattan skyline in the distance">
+    <figcaption>From high over the harbor, the far level of detail keeps the whole skyline in view.</figcaption>
+  </figure>
   <h2>It Feels like NYC</h2>
   <p>It feels like NYC. There are cars and people everywhere. There are the sounds of the city. You can see the city and Times Square at night. It feels real and feels alive.</p>
-  <p>We added all the things you'd see in the city as well: trees, bike stands, bus shelters, LinkNYC terminals (Claude's idea!).</p>
 
+  <figure class="shot">
+    <img src="../media/can-claude-build-nyc/07-times-square-at-night.jpg" width="1344" height="756" loading="lazy" alt="Times Square at night: crowds on the plaza under walls of glowing billboards">
+    <figcaption>Times Square at night.</figcaption>
+  </figure>
+  <div class="shot-pair">
+    <figure class="shot">
+      <img src="../media/can-claude-build-nyc/08-midtown-at-night.jpg" width="1344" height="756" loading="lazy" alt="Midtown at night from above, with lit windows and the floodlit Empire State Building">
+      <figcaption>Midtown at night: lit windows, a floodlit Empire State.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="../media/can-claude-build-nyc/09-east-river-bridges-at-night.jpg" width="1344" height="756" loading="lazy" alt="Bridges strung with lights across the East River at night">
+      <figcaption>The East River bridges at night.</figcaption>
+    </figure>
+  </div>  <p>We added all the things you'd see in the city as well: trees, bike stands, bus shelters, LinkNYC terminals (Claude's idea!).</p>
+
+  <figure class="shot">
+    <img src="../media/can-claude-build-nyc/03-fifth-avenue-empire-state.jpg" width="1344" height="756" loading="lazy" alt="Street-level view up Fifth Avenue: taxis, buses, street trees and a church, with the Empire State Building behind">
+    <figcaption>Up Fifth Avenue to the Empire State Building: taxis, buses, street lights and street trees.</figcaption>
+  </figure>
+  <figure class="shot">
+    <video controls playsinline preload="none" width="1280" height="720" poster="../media/can-claude-build-nyc/city-tour-poster.jpg">
+      <source src="../media/can-claude-build-nyc/city-tour.mp4" type="video/mp4">
+      <a href="../media/can-claude-build-nyc/city-tour.mp4">Watch the video</a>
+    </video>
+    <figcaption>A flyover: Midtown, Central Park, Brooklyn and Queens, from day into night.</figcaption>
+  </figure>
   <h2>Multiplayer</h2>
   <p>I wanted to make this multiplayer. Initially I thought we could do this p2p, with WebRTC. We needed a small signaling server for that. However, when I decided to create a public room we expanded the server to relay everything.</p>
 
