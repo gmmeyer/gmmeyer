@@ -160,7 +160,25 @@ h2 {
   stroke: var(--link);
   stroke-width: 2;
 }
-.diagram figcaption {
+.shot { margin: 1.75rem 0; }
+.shot img, .shot video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.12);
+}
+.shot-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 1.75rem 0;
+}
+.shot-pair .shot { margin: 0; }
+@media (max-width: 560px) {
+  .shot-pair { grid-template-columns: 1fr; gap: 1.75rem; }
+}
+.diagram figcaption, .shot figcaption {
   margin-top: 0.5rem;
   color: var(--muted);
   font-size: 0.85rem;
