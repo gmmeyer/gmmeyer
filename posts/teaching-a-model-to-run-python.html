@@ -33,9 +33,13 @@
 </header>
 
 <!--
-  DRAFT v2. Before publishing:
+  DRAFT v2. Edit this file, not posts/teaching-a-model-to-run-python.html:
+  Claude rebuilds the HTML (and the post's line on blog.html) from it. The
+  front matter sets the page title, subtitle, date and description.
+  Before publishing:
   - "Why did I do this?" is my guess at your reasons. Say it your way.
-  - The date is a placeholder, here and in article:published_time above.
+  - The date is a placeholder: set date: above.
+  - Delete this comment and the TODO in "Why did I do this?".
   - The social card (img/og/teaching-a-model-to-run-python.png) isn't rendered
     yet: after setting the date, run python3 _cards/build.py on the Mac (on
     Windows the card's font stack falls back to Segoe UI).
@@ -48,7 +52,7 @@
   <header class="post-head">
     <h1>Teaching a Model to Run Python</h1>
     <p class="dek">A small transformer that executes CPython bytecode, one instruction at a time</p>
-    <time datetime="2026-10-30">October 2026</time>
+    <time datetime="2026-10-30">October 30, 2026</time>
   </header>
 
   <p>I trained a small transformer to be a Python interpreter. You give it a script, real CPython compiles it to bytecode, and the model runs that bytecode one instruction at a time: it reads the program and the current state of the machine, and writes out the next state. A thin harness takes whatever the model says was printed and puts it on your screen.</p>
