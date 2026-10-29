@@ -76,6 +76,24 @@
 
   <div class="job">
     <div class="job-head">
+      <h3><a href="pythonlm/">pythonlm</a> <span class="role">· a transformer that runs Python</span></h3>
+      <span class="when">2026</span>
+    </div>
+    <ul>
+      <li>A 26M-parameter transformer that executes CPython 3.14 bytecode one instruction at a time: real CPython compiles the script, and the model reads the machine state and writes the next one — nothing else in the loop does the math.</li>
+      <li>Trained from scratch on one GPU on ~36B tokens of generated programs, each checked instruction by instruction against real CPython; it gets the exact output on 99.5% of hand-written integer and control-flow scripts and 93.5% of string scripts.</li>
+      <li>Runs in your browser: Pyodide compiles your script and the model (53 MB, half precision) steps through it on ONNX Runtime Web. Anything outside its subset of Python is refused up front rather than guessed at.</li>
+    </ul>
+    <p class="links">
+      <a href="pythonlm/">Try it</a>
+      <a href="https://github.com/gmmeyer/pythonlm">Source</a>
+      <a href="https://huggingface.co/gmmeyer/pythonlm">Model</a>
+      <a href="posts/teaching-a-model-to-run-python.html">Blog post</a>
+    </p>
+  </div>
+
+  <div class="job">
+    <div class="job-head">
       <h3><a href="https://cicerollm.com">Cicero</a> <span class="role">· a Latin LLM in your browser</span></h3>
       <span class="when">2026</span>
     </div>
