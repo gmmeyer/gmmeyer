@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Projects — Greg Meyer</title>
-  <meta name="description" content="Personal projects and open-source work by Greg Meyer: small models trained from scratch, in-browser ML, and contributions to the Datadog Agent and Integrations.">
+  <meta name="description" content="Personal projects and open-source work by Greg Meyer: small models trained from scratch, a life-size NYC game, a unikernel for AI agents, and the Datadog Agent and Integrations.">
   <link rel="canonical" href="https://gmmeyer.com/projects.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Greg Meyer">
   <meta property="og:title" content="Projects — Greg Meyer">
-  <meta property="og:description" content="Personal projects and open-source work by Greg Meyer: small models trained from scratch, in-browser ML, and contributions to the Datadog Agent and Integrations.">
+  <meta property="og:description" content="Personal projects and open-source work by Greg Meyer: small models trained from scratch, a life-size NYC game, a unikernel for AI agents, and the Datadog Agent and Integrations.">
   <meta property="og:url" content="https://gmmeyer.com/projects.html">
   <meta property="og:image" content="https://gmmeyer.com/img/og/projects.png">
   <meta property="og:image:width" content="1200">
@@ -34,11 +34,45 @@
 <section>
   <h2>Personal Projects</h2>
   <p>
-    Lately I've been training small models from scratch at
-    home — a language model, a world model, a music model, and a diffusion
-    model — and shipping the ones that are fun to play with straight into the
-    browser.
+    Lately I've been playing around with a few mid-sized projects. I've
+    trained a few small models from scratch — a language model, a world
+    model, a music model, a diffusion model and a Python language model — and
+    shipped the ones that are fun to play with straight into the browser.
+    I've built a POC of a game with a life-size version of NYC. I've even
+    built an operating system.
   </p>
+
+  <div class="job">
+    <div class="job-head">
+      <h3><a href="https://github.com/gmmeyer/grix">grix</a> <span class="role">· a unikernel sandbox for AI agents</span></h3>
+      <span class="when">2026</span>
+    </div>
+    <ul>
+      <li>A Rust unikernel that boots a fresh microVM for every run and executes one unmodified Linux binary (Python, Node, Go, busybox) on an agent's behalf, with least privilege by default.</li>
+      <li>The kernel implements the Linux syscall ABI itself and checks every call against the capabilities you grant; anything denied is reported back, so the agent can see exactly what the program needed.</li>
+      <li>Ships its own VMM on Hypervisor.framework and KVM (a run boots, executes and exits in about 0.1 s), plus an MCP server, Python bindings, and snapshots for instant start.</li>
+    </ul>
+    <p class="links">
+      <a href="https://github.com/gmmeyer/grix">Source</a>
+    </p>
+  </div>
+
+  <div class="job">
+    <div class="job-head">
+      <h3><a href="https://nycheroes.party">NYC Heroes</a> <span class="role">· a superhero game in a 1:1 New York</span></h3>
+      <span class="when">2026</span>
+    </div>
+    <ul>
+      <li>A browser superhero movement demo (super speed, web swinging, flight) across all five boroughs at 1:1 scale, built with Claude and Godot in about three days.</li>
+      <li>All ~1.08M buildings come from the city's open data, with landmarks like the Empire State and the Guggenheim modeled in detail; a Cloudflare Worker streams ~2GB of city tiles at three levels of detail, prefetching where you'll be in three seconds.</li>
+      <li>Co-op multiplayer: private rooms of up to 8 play peer-to-peer over WebRTC, and a public room of up to 64 is relayed through a Cloudflare Durable Object.</li>
+    </ul>
+    <p class="links">
+      <a href="https://nycheroes.party">Play it</a>
+      <a href="https://github.com/gmmeyer/nycheroes">Source</a>
+      <a href="posts/can-claude-build-nyc.html">Blog post</a>
+    </p>
+  </div>
 
   <div class="job">
     <div class="job-head">
