@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# The site is plain static files, so there's nothing to install or build; the preview is
+# served by .niteshift/files/serve.py (see services.yaml). This only makes the README's
+# `python3 _cards/build.py` work in the sandbox.
+set -euo pipefail
+repo="$(cd "$(dirname "$0")/.." && pwd)"
+
+# build.py runs Chrome from its macOS path unless CHROME is set. Put a shim at that path so the
+# command works as written: it runs the sandbox's headless Chrome without the Chrome sandbox
+# (we're root) and with the fonts in cards-fonts.conf. Rewritten every run, so it always points
+# at the newest Chrome on this image.
+chrome=""
+for candidate in \
+  $(ls -d "$HOME"/.agent-browser/browsers/chrome-*/chrome 2>/dev/null | sort -V -r) \
+  $(ls -d "$HOME"/.cache/ms-playwright/chromium-*/chrome-linux64/chrome 2>/dev/null | sort -V -r) \
+  $(command -v google-chrome chromium chromium-browser 2>/dev/null || true); do
+  if [ -x "$candidate" ]; then
+    chrome="$candidate"
+    break
+  fi
+done
+
+shim="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+if [ -z "$chrome" ]; then
+  echo "warning: no Chrome found, so _cards/build.py won't run in this sandbox" >&2
+else
+  mkdir -p "$(dirname "$shim")"
+  cat >"$shim" <<EOF
+#!/bin/sh
+# Written by .niteshift/setup for _cards/build.py.
+FONTCONFIG_FILE='$repo/.niteshift/files/cards-fonts.conf' exec '$chrome' --no-sandbox "\$@"
+EOF
+  chmod +x "$shim"
+  echo "card renderer: $chrome"
+fi

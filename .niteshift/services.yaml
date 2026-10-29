@@ -1,0 +1,4 @@
+services:
+  - name: site
+    command: python3 .niteshift/files/serve.py "$PORT"
+    port: 8000
