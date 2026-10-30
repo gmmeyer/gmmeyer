@@ -138,8 +138,15 @@ h2 {
   overflow-x: auto;
 }
 .post pre code { background: none; padding: 0; }
-.post pre .event { color: var(--link); }
-.post pre .quiet { color: var(--muted); }
+/* The grix demos (grixos.dev/grix-example.js), in the site's colours. */
+grix-example {
+  --grix-bg: var(--bg);
+  --grix-fg: var(--text);
+  --grix-muted: var(--muted);
+  --grix-border: var(--rule);
+  --grix-accent: var(--link);
+  --grix-accent-fg: var(--bg);
+}
 .diagram { margin: 1.75rem 0; }
 .diagram-scroll { overflow-x: auto; }
 .diagram svg {
@@ -170,11 +177,7 @@ h2 {
   border-radius: 6px;
   background: rgba(127, 127, 127, 0.12);
 }
-.shot pre {
-  margin: 0;
-  line-height: 1.5;
-  white-space: pre-wrap;
-}
+.shot grix-example { margin: 0; }
 .shot-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
