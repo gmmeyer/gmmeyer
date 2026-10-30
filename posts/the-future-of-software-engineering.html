@@ -17,7 +17,9 @@
   <meta property="article:published_time" content="2026-10-29">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@GMMeyer">
-  <link rel="stylesheet" href="../style.css?v=6">
+  <link rel="stylesheet" href="../style.css?v=7">
+  <meta name="grix-files" content="https://files.grixos.dev/">
+  <script type="module" src="https://grixos.dev/grix-example.js"></script>
 </head>
 <body>
 
@@ -37,7 +39,8 @@
     <h1>The Future of Software Engineering</h1>
     <p class="dek">Unikernels lost to containers. What happens when friction goes to zero?</p>
     <time datetime="2026-10-29">October 29, 2026</time>
-    <p class="post-note">Originally posted on <a href="https://grixos.dev/blog/unikernels/">grixos.dev</a>, where the demos run in your browser.</p>
+    <p class="post-note">Originally posted on <a href="https://grixos.dev/blog/unikernels/">grixos.dev</a>.</p>
+    <p class="post-note isolation-warning" hidden>Your browser didn't give this page cross-origin isolation, so the demos can't run here. They need SharedArrayBuffer, for QEMU's threads. They should run on <a href="https://grixos.dev/blog/unikernels/">grixos.dev</a>.</p>
   </header>
 
   <p>What would software engineering be like if we didn't have to care about friction? This is the question we have to ask in the age of AI. Developer experience is now mitigated through AI. We only have to care about whether the agents can understand what we are doing.</p>
@@ -48,12 +51,11 @@
   <p>A few of the talks there were on <a href="https://en.wikipedia.org/wiki/Unikernel">unikernels</a>. They were a then pretty interesting idea. It is a program that is statically linked to the kernel itself. The program is compiled in (or perhaps shipped in with) just the libraries and kernel modules it needs. Do you need glibc? No? It's not gonna be there. Do you need kernel level networking? No? It's not gonna be there either.</p>
 
   <figure class="shot">
-    <pre><code>$ /bin/busybox wc -l /data/report.csv /etc/shadow
-        3 /data/report.csv
-<span class="event">grix: missing /etc/shadow: not imported</span>
-wc: /etc/shadow: No such file or directory
-        3 total</code></pre>
-    <figcaption>Only the imported files exist. The program looks for <code>/etc/shadow</code>, and grix reports it wasn't imported. <a href="https://grixos.dev/blog/unikernels/">Try it on grixos.dev</a>.</figcaption>
+    <grix-example command="/bin/busybox wc -l /data/report.csv /etc/shadow"
+      files='[{"src": "bin/busybox", "path": "/bin/busybox", "mode": 493}, {"text": "region,total\nnorth,12\nsouth,7\n", "path": "/data/report.csv"}]'
+      download="660 KB"
+      show-missing></grix-example>
+    <figcaption>Try it: only the imported files exist. The program looks for <code>/etc/shadow</code>, and grix reports it wasn't imported.</figcaption>
   </figure>
 
   <p>You didn't have to accept that the chunky <a href="https://en.wikipedia.org/wiki/Monolithic_kernel">monolithic-kerneled</a> Linux needed to have SMB and webcam drivers loaded in every program you were making. They also seemed tailor made for the container age. You could build out a container that just had a small handful of things on it.</p>
@@ -67,30 +69,25 @@ wc: /etc/shadow: No such file or directory
   <p>It needs all the features of an OS. Multitasking, networking, forking, threads.</p>
 
   <figure class="shot">
-    <pre><code>$ sh -c 'echo hello world | tr a-z A-Z; seq 1 5 | sort -r | head -3; uname -a'
-<span class="event">grix: denied clone: needs capability `process`</span>
-sh: can't fork: Operation not permitted
-
-<span class="quiet"># with process granted:</span>
-$ sh -c 'echo hello world | tr a-z A-Z; seq 1 5 | sort -r | head -3; uname -a'
-HELLO WORLD
-5
-4
-3
-Linux grix 6.1.0-grix #1 SMP grix aarch64 Linux</code></pre>
-    <figcaption>The shell can't fork until you grant <code>process</code>. <a href="https://grixos.dev/blog/unikernels/">Try it on grixos.dev</a>.</figcaption>
+    <grix-example command="sh -c &#x27;echo hello world | tr a-z A-Z; seq 1 5 | sort -r | head -3; uname -a&#x27;"
+      caps="process"
+      env="PATH=/bin"
+      files='[{"src": "bin/busybox", "path": "/bin/busybox", "mode": 493}, {"symlink": "busybox", "path": "/bin/sh"}, {"symlink": "busybox", "path": "/bin/cat"}, {"symlink": "busybox", "path": "/bin/ls"}, {"symlink": "busybox", "path": "/bin/tr"}, {"symlink": "busybox", "path": "/bin/sort"}, {"symlink": "busybox", "path": "/bin/uniq"}, {"symlink": "busybox", "path": "/bin/wc"}, {"symlink": "busybox", "path": "/bin/grep"}, {"symlink": "busybox", "path": "/bin/head"}, {"symlink": "busybox", "path": "/bin/seq"}, {"symlink": "busybox", "path": "/bin/sleep"}, {"symlink": "busybox", "path": "/bin/uname"}, {"symlink": "busybox", "path": "/bin/id"}, {"symlink": "busybox", "path": "/bin/ps"}, {"symlink": "busybox", "path": "/bin/yes"}, {"symlink": "busybox", "path": "/bin/env"}, {"symlink": "busybox", "path": "/bin/mkdir"}, {"symlink": "busybox", "path": "/bin/rm"}, {"symlink": "busybox", "path": "/bin/touch"}, {"symlink": "busybox", "path": "/bin/echo"}]'
+      download="660 KB"></grix-example>
+    <figcaption>Try it: the shell can't fork until you grant <code>process</code>.</figcaption>
   </figure>
 
   <p>It has to be able to run programs that the OS can run. I specifically chose to give it Linux compatibility, to ensure that you (or I) wouldn't have to fool around with compile targets. Unmodified programs can run on my kernel, though some will fail as not everything is currently supported.</p>
 
   <figure class="shot">
-    <pre><code>$ python3
-Python 3.12.15 (main, Oct  1 2026, 09:32:25) [GCC 14.2.0] on linux
-Type "help", "copyright", "credits" or "license" for more information.
-&gt;&gt;&gt; import platform; platform.platform()
-'Linux-6.1.0-grix-aarch64-with'
-&gt;&gt;&gt;</code></pre>
-    <figcaption>Alpine's Python 3.12, unmodified, in a terminal. <a href="https://grixos.dev/blog/unikernels/">Try it on grixos.dev</a> (it downloads 15 MB the first time).</figcaption>
+    <grix-example command="python3"
+      caps="threads fs_write process net"
+      allow="threads"
+      env='["TERM=xterm-256color", "HOME=/tmp"]'
+      files='[{"tar": "rootfs/python.tar.gz", "path": "/"}]'
+      download="15 MB"
+      tty memory="512"></grix-example>
+    <figcaption>Try it: Alpine's Python 3.12, unmodified, in a terminal. Downloads 15 MB the first time.</figcaption>
   </figure>
 
   <p>I decided not to statically link the program to the kernel, instead it compiles to a more limited kernel and allows you to run your program on top of that. It gives it more freedom (you don't need to write Rust, you can run anything on it.)</p>
@@ -101,24 +98,23 @@ Type "help", "copyright", "credits" or "license" for more information.
   <p>I built my unikernel as an agent sandbox. It's meant for your agent to run in and execute code safely, and without having to deal with the overhead of modern sandboxed environments. The security is in part built in.</p>
 
   <figure class="shot">
-    <pre><code>$ /bin/net
-<span class="event">grix: denied socket: needs capability `net`</span>
-socket: Operation not permitted
-
-<span class="quiet"># with net granted:</span>
-$ /bin/net
-socket: opened fd 3</code></pre>
-    <figcaption>The socket is denied, and grix says which capability would allow it. <a href="https://grixos.dev/blog/unikernels/">Try it on grixos.dev</a>.</figcaption>
+    <grix-example command="/bin/net"
+      caps="net"
+      files='[{"src": "bin/net", "path": "/bin/net", "mode": 493}]'></grix-example>
+    <figcaption>Try it: the socket is denied, and grix says which capability would allow it. Tick <code>net</code> and run it again.</figcaption>
   </figure>
 
   <p>Because there's less going on, there's also significantly less overhead. That means that you can get away with a smaller footprint in your sandboxed environments. You don't have to just accept that your Claude will need room to stretch out. He can fit just fine in just the RAM he needs, without the OS overhead.</p>
 
   <figure class="shot">
-    <pre><code>grix:/$ echo hi &gt; /tmp/x
-<span class="event">grix: denied openat (/tmp/x): needs capability `fs_write`</span>
-bash: /tmp/x: Operation not permitted
-grix:/$</code></pre>
-    <figcaption>bash and busybox in a terminal, writing <code>/tmp/x</code> without <code>fs_write</code>. <a href="https://grixos.dev/blog/unikernels/">Try it on grixos.dev</a>.</figcaption>
+    <grix-example command="bash"
+      caps="process fs_write"
+      allow="process"
+      env='["PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin", "HOME=/tmp", "TERM=xterm-256color", "PS1=grix:\\w\\$ "]'
+      files='[{"tar": "rootfs/bash.tar.gz", "path": "/"}]'
+      download="1.8 MB"
+      tty></grix-example>
+    <figcaption>Try it: bash and busybox in a terminal. Try <code>echo hi &gt; /tmp/x</code> without <code>fs_write</code>.</figcaption>
   </figure>
 
   <p>I was going to put in a few code examples here, but I realized they aren't necessary. You aren't going to be writing the code anyway. So, instead, I've sprinkled a few demos of this through this. These aren't running on a server. I have compiled QEMU to WASM and the kernel is running on that in your browser.</p>
@@ -134,6 +130,27 @@ grix:/$</code></pre>
     <a href="https://www.linkedin.com/in/gregmmeyer/" target="_blank" rel="noopener" aria-label="LinkedIn"><svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg></a>
   </span>
 </footer>
+
+<script>
+  // The demos need SharedArrayBuffer (QEMU's threads), so this page has to be cross-origin
+  // isolated. GitHub Pages can't send the COOP/COEP headers for that, so coi-serviceworker
+  // adds them. It's registered for this post alone, so the rest of the site is left as it is.
+  (() => {
+    const warn = () => { document.querySelector(".isolation-warning").hidden = false; };
+    if (window.crossOriginIsolated !== false) return;
+    const sw = navigator.serviceWorker;
+    if (!window.isSecureContext || !sw) return warn();
+    // The worker served this page and it still isn't isolated: reloading won't help.
+    if (sw.controller) return warn();
+    sw.register("coi-serviceworker.js", { scope: "the-future-of-software-engineering" }).then((reg) => {
+      const worker = reg.installing || reg.waiting || reg.active;
+      if (worker.state === "activated") return location.reload();
+      worker.addEventListener("statechange", () => {
+        if (worker.state === "activated") location.reload();
+      });
+    }, warn);
+  })();
+</script>
 
 </body>
 </html>
