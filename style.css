@@ -25,7 +25,8 @@ body {
 }
 a { color: var(--link); text-decoration: none; }
 a:hover { text-decoration: underline; }
-header h1 {
+header h1,
+header .site-name {
   margin: 0;
   font-size: 1.6rem;
   font-weight: 650;
