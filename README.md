@@ -1,6 +1,6 @@
 # Hi, I'm Greg Meyer 👋
 
-I'm a software engineer in New York. I'm currently a founding engineer at [Zingage](https://zingage.com), building AI agents that run operations for home care agencies. Before that I co-founded Bearworks, and before that I helped scale the Datadog Agent through hypergrowth.
+I'm a software engineer in New York. I'm currently at [Basis](https://getbasis.ai/), helping build the platform that its AI agents run on. Previously, I was a founding engineer at Zingage, co-founded Bearworks, and helped scale the Datadog Agent through hypergrowth.
 
 Outside of work I train small models from scratch, practice post-training, and put the fun ones in the browser.
 
@@ -19,7 +19,8 @@ Outside of work I train small models from scratch, practice post-training, and p
 
 | Company | Role | Years |
 |---|---|---|
-| Zingage | Founding Engineer | 2025 – present |
+| [Basis](https://getbasis.ai/) | Software Engineer | 2026 – present |
+| Zingage | Founding Engineer | 2025 – 2026 |
 | Bearworks | Co-Founder & CTO | 2022 – 2025 |
 | Gantry | Software Engineer | 2021 – 2022 |
 | Datadog | Senior Software Engineer | 2016 – 2021 |
