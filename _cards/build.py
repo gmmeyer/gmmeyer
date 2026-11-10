@@ -30,8 +30,8 @@ OVERRIDES = {
     "index.html": {
         "title": NAME,
         "kicker": "Software engineer · New York",
-        "desc": "Founding engineer at Zingage. Previously co-founder of "
-        "Bearworks and senior engineer at Datadog.",
+        "desc": "Helping build the platform for AI agents at Basis. "
+        "Previously at Zingage, Bearworks, and Datadog.",
         "byline": "",
     },
 }
